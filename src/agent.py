@@ -24,7 +24,7 @@ def main():
             
         print(f"SQL Generado:\n{result['generated_sql']}\n")
         
-        rows = result["results"]
+        rows = result.get("rows", [])
         if not rows:
             print("No se encontraron resultados.")
         else:

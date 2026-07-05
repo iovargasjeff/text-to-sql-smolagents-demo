@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from src.api import router
 from src import config
 
-app = FastAPI(title="Text-to-SQL Lab FASE 2")
+app = FastAPI(title="Text-to-SQL Lab FASE 3")
 
 # Incluir las rutas de la API
 app.include_router(router)

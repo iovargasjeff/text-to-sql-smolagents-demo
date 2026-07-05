@@ -10,7 +10,7 @@ def validate_sql(sql: str) -> str:
     clean_sql = sql.strip().upper()
     
     # Bloquear palabras clave peligrosas
-    forbidden = ["DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "TRUNCATE", "CREATE"]
+    forbidden = ["DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "TRUNCATE", "CREATE", "GRANT", "REVOKE"]
     for keyword in forbidden:
         # Regex para buscar la palabra exacta como token
         if re.search(rf'\b{keyword}\b', clean_sql):
