@@ -16,7 +16,7 @@ def generate_natural_answer(question: str, sql: str, rows: list, provider_name: 
         truncated_rows = rows[:max_rows]
         has_more = len(rows) > max_rows
         
-        rows_str = json.dumps(truncated_rows, indent=2, ensure_ascii=False)
+        rows_str = json.dumps(truncated_rows, indent=2, ensure_ascii=False, default=str)
         if has_more:
             rows_str += f"\n... (y {len(rows) - max_rows} resultados más omitidos)"
 
@@ -61,4 +61,4 @@ def fallback_natural_answer(question: str, rows: list) -> str:
             parts = [f"{k}: {v}" for k, v in row.items()]
             return f"Se encontró 1 registro con los siguientes datos: {', '.join(parts)}."
     
-    return f"Se encontraron {count} resultados. El primer registro es: {json.dumps(rows[0], ensure_ascii=False)}."
+    return f"Se encontraron {count} resultados. El primer registro es: {json.dumps(rows[0], ensure_ascii=False, default=str)}."
