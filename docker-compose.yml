@@ -1,0 +1,38 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: text2sql_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-text2sql_demo}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-text2sql_demo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: text2sql_app
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./scripts:/app/scripts
+      - ./migrations:/app/migrations
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "python scripts/wait_for_db.py &&
+             python scripts/run_migrations.py &&
+             echo 'Backend listo. Usa docker exec para interactuar con agent.py' &&
+             tail -f /dev/null"
+
+volumes:
+  pgdata:

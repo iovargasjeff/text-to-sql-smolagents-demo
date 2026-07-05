@@ -1,50 +1,54 @@
-import os
-from dotenv import load_dotenv
-from smolagents import CodeAgent, InferenceClientModel
-from sql_tool import sql_engine
-from database import engine
-from schema_utils import describe_table
+import sys
+from tabulate import tabulate
+from src.text_to_sql import process_question
+from src.vector_search import search_knowledge
 
-# Cargar variables de entorno
-load_dotenv()
-hf_token = os.getenv("HF_TOKEN")
+def main():
+    if len(sys.argv) < 3:
+        print("Uso:")
+        print("  python src/agent.py sql \"<pregunta>\"")
+        print("  python src/agent.py vector \"<vector_4d>\"")
+        sys.exit(1)
 
-if not hf_token:
-    print("Advertencia: No se encontró HF_TOKEN en las variables de entorno. Ejecute configurando el token en .env primero.")
-    exit(0)
+    command = sys.argv[1].lower()
+    payload = sys.argv[2]
 
-print("=== Agente 1: Consulta básica (receipts) ===")
-agent1 = CodeAgent(
-    tools=[sql_engine],
-    model=InferenceClientModel(model_id="meta-llama/Llama-3.1-8B-Instruct", token=hf_token),
-)
-agent1.run("¿Puedes darme el nombre del cliente con el recibo más caro?")
+    if command == "sql":
+        print(f"Pregunta: {payload}\n")
+        
+        result = process_question(payload)
+        
+        if not result.get("success"):
+            print(f"Error: {result.get('error')}")
+            sys.exit(1)
+            
+        print(f"SQL Generado:\n{result['generated_sql']}\n")
+        
+        rows = result["results"]
+        if not rows:
+            print("No se encontraron resultados.")
+        else:
+            print("Resultados:")
+            # Usar tabulate para un output limpio
+            headers = rows[0].keys()
+            table = [list(r.values()) for r in rows]
+            print(tabulate(table, headers=headers, tablefmt="grid"))
+            
+    elif command == "vector":
+        print(f"Búsqueda Vectorial para: [{payload}]\n")
+        rows = search_knowledge(payload)
+        
+        if not rows:
+            print("No se encontraron resultados.")
+        else:
+            print("Fragmentos más relevantes:")
+            for r in rows:
+                print(f"- Distancia: {r['distance']:.4f} | Origen: {r['source']}")
+                print(f"  Contenido: {r['content']}\n")
+                
+    else:
+        print(f"Comando desconocido: {command}")
+        sys.exit(1)
 
-print("\n=== Agente 2: Consulta con JOIN (receipts + waiters) ===")
-
-# Actualizar la descripción de la herramienta para incluir la tabla waiters
-receipts_desc = describe_table(engine, "receipts")
-waiters_desc = describe_table(engine, "waiters")
-
-updated_description = f"""Permite realizar consultas SQL sobre las tablas. Ten en cuenta que la salida de esta herramienta es una representación en texto de la ejecución.
-Puede usar las siguientes tablas:
-
-Tabla 'receipts':
-{receipts_desc}
-
-Tabla 'waiters':
-{waiters_desc}
-"""
-
-sql_engine.description = updated_description
-
-agent2 = CodeAgent(
-    tools=[sql_engine],
-    # model_id="Qwen/Qwen3-Next-80B-A3B-Thinking" (usado en el artículo original)
-    model=InferenceClientModel(model_id="Qwen/Qwen3-Next-80B-A3B-Thinking", token=hf_token),
-)
-
-agent2.run("¿Qué mesero recibió más dinero en propinas en total?")
-
-print("\n=== Agente 2: Tercera pregunta combinada ===")
-agent2.run("Dime el nombre del mesero que atendió al cliente Woodrow Wilson y cuánto dejó de propina.")
+if __name__ == "__main__":
+    main()
