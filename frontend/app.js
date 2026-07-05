@@ -182,10 +182,8 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch(`/api/history/${id}`)
             .then(res => res.json())
             .then(data => {
-                // Ocultar bienvenida si existe
-                if (welcomeMessage) {
-                    welcomeMessage.style.display = 'none';
-                }
+                // Limpiar el área de chat de interacciones anteriores
+                chatArea.innerHTML = "";
                 
                 // Imprimir como un nuevo intercambio en el chat
                 appendUserMessage(data.question);
