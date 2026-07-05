@@ -5,8 +5,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const runBtn = document.getElementById("runBtn");
     const chatArea = document.getElementById("chatArea");
     const welcomeMessage = document.querySelector(".welcome-message");
+    const historyList = document.getElementById("historyList");
+    const filterBtns = document.querySelectorAll(".filter-btn");
 
     let providersData = [];
+    let currentFilter = "all";
 
     // Cargar proveedores
     fetch("/api/providers")
@@ -15,6 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
             providersData = data.providers;
             populateProviders();
         });
+
+    // Cargar historial
+    loadHistory();
 
     function populateProviders() {
         providerSelect.innerHTML = "";
@@ -110,6 +116,9 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 appendAssistantMessage(data);
             }
+            
+            // Recargar historial después de una consulta
+            loadHistory();
         } catch (err) {
             loadingNode.remove();
             appendErrorMessage(`Error de red: ${err.message}`);
@@ -118,6 +127,96 @@ document.addEventListener("DOMContentLoaded", () => {
             scrollToBottom();
             questionInput.focus();
         }
+    });
+
+    function loadHistory() {
+        let url = "/api/history?limit=20";
+        if (currentFilter !== "all") {
+            url += `&status=${currentFilter}`;
+        }
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                renderHistoryList(data.history);
+            })
+            .catch(err => console.error("Error cargando historial", err));
+    }
+
+    function renderHistoryList(items) {
+        historyList.innerHTML = "";
+        if (!items || items.length === 0) {
+            historyList.innerHTML = "<p style='color:#94a3b8; font-size: 0.85rem; text-align: center; margin-top:20px;'>No hay consultas recientes.</p>";
+            return;
+        }
+
+        items.forEach(item => {
+            const div = document.createElement("div");
+            div.className = "history-item";
+            
+            const time = new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const isSuccess = item.status === "success";
+            const badgeClass = isSuccess ? "success" : "error";
+            const badgeText = isSuccess ? "Éxito" : "Error";
+            const latency = item.latency_ms ? `${item.latency_ms}ms` : "-";
+            const rows = item.row_count !== null ? `${item.row_count} filas` : "";
+            
+            div.innerHTML = `
+                <div class="hi-header">
+                    <span class="hi-badge ${badgeClass}">${badgeText}</span>
+                    <span class="hi-time">${time}</span>
+                </div>
+                <div class="hi-question" title="${item.question}">${item.question}</div>
+                <div class="hi-footer">
+                    <span>${item.provider}/${item.model}</span>
+                    <span>${latency} ${rows ? '| ' + rows : ''}</span>
+                </div>
+            `;
+            
+            div.addEventListener("click", () => loadHistoryDetail(item.id));
+            historyList.appendChild(div);
+        });
+    }
+
+    function loadHistoryDetail(id) {
+        fetch(`/api/history/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                // Ocultar bienvenida si existe
+                if (welcomeMessage) {
+                    welcomeMessage.style.display = 'none';
+                }
+                
+                // Imprimir como un nuevo intercambio en el chat
+                appendUserMessage(data.question);
+                
+                if (data.status === "success") {
+                    // Adaptar la data para que appendAssistantMessage la entienda
+                    const adaptedData = {
+                        answer: data.natural_answer,
+                        generated_sql: data.generated_sql,
+                        rows: [], // No guardamos los rows en DB, así que la tabla estará vacía
+                        row_count: data.row_count,
+                        provider: data.provider,
+                        model: data.model
+                    };
+                    appendAssistantMessage(adaptedData, true); // true = es un log pasado
+                } else {
+                    appendErrorMessage(data.error_message || "Error desconocido");
+                }
+                
+                scrollToBottom();
+            })
+            .catch(err => console.error("Error obteniendo detalle", err));
+    }
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            filterBtns.forEach(b => b.classList.remove("active"));
+            e.target.classList.add("active");
+            currentFilter = e.target.dataset.filter;
+            loadHistory();
+        });
     });
 
     function appendUserMessage(text) {
@@ -151,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
         chatArea.appendChild(row);
     }
 
-    function appendAssistantMessage(data) {
+    function appendAssistantMessage(data, isHistory = false) {
         const row = document.createElement("div");
         row.className = "msg-row bot";
         const bubble = document.createElement("div");
@@ -160,7 +259,11 @@ document.addEventListener("DOMContentLoaded", () => {
         // Respuesta en lenguaje natural
         const answerDiv = document.createElement("div");
         answerDiv.className = "bot-answer";
-        answerDiv.textContent = data.answer || "No se pudo generar una respuesta.";
+        if (isHistory) {
+            answerDiv.innerHTML = `<span style="color:#94a3b8; font-size:0.8rem; display:block; margin-bottom:5px;">(Consulta del Historial)</span>` + (data.answer || "No se pudo generar una respuesta.");
+        } else {
+            answerDiv.textContent = data.answer || "No se pudo generar una respuesta.";
+        }
         bubble.appendChild(answerDiv);
 
         // SQL (Colapsable)
@@ -181,7 +284,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Resultados (Colapsable)
-        if (data.rows) {
+        if (data.rows && !isHistory) {
             const tableDetails = document.createElement("details");
             tableDetails.open = true; // Abierto por defecto
             const tableSummary = document.createElement("summary");
@@ -200,6 +303,13 @@ document.addEventListener("DOMContentLoaded", () => {
             tableDetails.appendChild(tableSummary);
             tableDetails.appendChild(tableContent);
             bubble.appendChild(tableDetails);
+        } else if (isHistory) {
+            const historyNote = document.createElement("div");
+            historyNote.style.fontSize = "0.8rem";
+            historyNote.style.color = "#64748b";
+            historyNote.style.marginTop = "10px";
+            historyNote.textContent = `Nota: Los datos reales no se almacenan en el historial por seguridad. Filas devueltas originalmente: ${data.row_count || 0}.`;
+            bubble.appendChild(historyNote);
         }
 
         // Footer Metadata

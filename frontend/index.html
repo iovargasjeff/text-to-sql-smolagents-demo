@@ -7,8 +7,25 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="chat-container">
-        <header class="chat-header">
+    <div class="app-layout">
+        <!-- Sidebar Historial -->
+        <aside class="history-sidebar">
+            <div class="history-header">
+                <h2>Historial</h2>
+                <div class="history-filters">
+                    <button class="filter-btn active" data-filter="all">Todos</button>
+                    <button class="filter-btn" data-filter="success">Éxito</button>
+                    <button class="filter-btn" data-filter="error">Error</button>
+                </div>
+            </div>
+            <div class="history-list" id="historyList">
+                <!-- Items de historial cargados por JS -->
+            </div>
+        </aside>
+
+        <!-- Chat Container -->
+        <div class="chat-container">
+            <header class="chat-header">
             <div>
                 <h1>Text-to-SQL Assistant</h1>
                 <p>Tu asistente para consultas a bases de datos</p>
@@ -40,7 +57,8 @@
                     <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
                 </button>
             </div>
-        </footer>
+            </footer>
+        </div>
     </div>
     <script src="app.js"></script>
 </body>

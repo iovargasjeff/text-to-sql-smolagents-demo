@@ -25,6 +25,17 @@ En la **Fase 2** hemos extendido el backend original de la Fase 1 incorporando u
    - `gemini`: Integración directa vía API REST a los modelos Gemini 2.5 de Google.
 3. **API RESTful**: Endpoint `/api/query` enriquecido. Ahora devuelve `answer` y `row_count`.
 
+## Novedades Fase 3 (Historial y Observabilidad)
+
+1. **Tabla de Logs (`query_logs`)**: Se agregó una migración SQL para registrar todas las consultas, tanto exitosas como fallidas. Guarda métricas útiles como latencia (`latency_ms`), filas devueltas (`row_count`), error si falló, respuesta en lenguaje natural y modelo utilizado.
+2. **Panel de Historial UI**: Una nueva barra lateral en la aplicación web permite:
+   - Ver consultas recientes.
+   - Filtrar por estado (Todos, Éxito, Error).
+   - Ver indicadores visuales (badges verdes/rojos) y el tiempo de respuesta.
+   - Hacer clic en un log anterior para revivir la consulta en el área de chat (mostrando la pregunta, la respuesta en lenguaje natural y el SQL generado).
+3. **Nuevos Endpoints API**: `/api/history` y `/api/history/{id}` que permiten consultar de forma programática las consultas pasadas.
+4. **Resiliencia**: Los datos tabulares reales no se guardan en el log por seguridad, pero sí se conserva el SQL y la cantidad de filas devueltas originalmente.
+
 ## Instalación y Ejecución
 
 1. Clona el repositorio.

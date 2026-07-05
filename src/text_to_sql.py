@@ -3,7 +3,9 @@ from src.model_factory import get_provider
 from src.sql_guard import validate_sql
 from src.db import run_query
 from src.answer_synthesizer import generate_natural_answer
+from src.query_logger import log_query_execution
 from src import config
+import time
 
 def process_question(question: str, provider_name: str = None, model_name: str = None) -> dict:
     """
@@ -17,6 +19,11 @@ def process_question(question: str, provider_name: str = None, model_name: str =
         provider_name = config.MODEL_PROVIDER
     if not model_name:
         model_name = config.MODEL_NAME
+        
+    start_time = time.time()
+    safe_sql = None
+    answer = None
+    results = []
 
     try:
         # 1. Esquema
@@ -35,6 +42,19 @@ def process_question(question: str, provider_name: str = None, model_name: str =
         # 5. Sintetizar respuesta
         answer = generate_natural_answer(question, safe_sql, results, provider_name, model_name)
         
+        latency_ms = int((time.time() - start_time) * 1000)
+        
+        log_query_execution(
+            question=question,
+            provider=provider_name,
+            model=model_name,
+            status="success",
+            latency_ms=latency_ms,
+            generated_sql=safe_sql,
+            natural_answer=answer,
+            row_count=len(results)
+        )
+        
         return {
             "success": True,
             "provider": provider_name,
@@ -44,17 +64,32 @@ def process_question(question: str, provider_name: str = None, model_name: str =
             "generated_sql": safe_sql,
             "rows": results,
             "row_count": len(results),
+            "latency_ms": latency_ms,
             "error": None
         }
     except Exception as e:
+        latency_ms = int((time.time() - start_time) * 1000)
+        error_msg = str(e)
+        
+        log_query_execution(
+            question=question,
+            provider=provider_name,
+            model=model_name,
+            status="error",
+            latency_ms=latency_ms,
+            generated_sql=safe_sql,
+            error_message=error_msg
+        )
+        
         return {
             "success": False,
             "provider": provider_name,
             "model": model_name,
             "question": question,
             "answer": None,
-            "generated_sql": None,
+            "generated_sql": safe_sql,
             "rows": [],
             "row_count": 0,
-            "error": str(e)
+            "latency_ms": latency_ms,
+            "error": error_msg
         }
