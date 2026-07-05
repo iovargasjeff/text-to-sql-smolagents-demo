@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 venv/
 .venv/
+articulo-text-to-sql-smolagents-es.md

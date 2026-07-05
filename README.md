@@ -50,7 +50,7 @@ Cada archivo puede ejecutarse de manera independiente para comprobar su funciona
 
 ### 1. Probar la base de datos
 ```bash
-python database.py
+python src/database.py
 ```
 **Salida de ejemplo (real):**
 ```
@@ -68,12 +68,12 @@ python database.py
 
 ### 2. Probar la extracción del esquema
 ```bash
-python schema_utils.py
+python src/schema_utils.py
 ```
 
 ### 3. Probar la herramienta SQL y su seguridad
 ```bash
-python sql_tool.py
+python src/sql_tool.py
 ```
 **Salida de ejemplo (real, validando bloqueo de keywords):**
 ```
@@ -90,7 +90,7 @@ Excepción capturada correctamente: Error de seguridad: La consulta contiene una
 ### 4. Ejecutar el Agente
 Asegúrate de que el token está configurado en tu archivo `.env`.
 ```bash
-python agent.py
+python src/agent.py
 ```
 El agente intentará responder a tres preguntas usando razonamiento lógico: 
 1. ¿Puedes darme el nombre del cliente con el recibo más caro?
@@ -101,10 +101,10 @@ El agente intentará responder a tres preguntas usando razonamiento lógico:
 
 | Archivo | Propósito |
 |---------|-----------|
-| `database.py` | Crea el motor SQLite en memoria y pobla las tablas `receipts` y `waiters`. |
-| `schema_utils.py` | Proporciona herramientas dinámicas (`inspect`) para leer el esquema de las tablas. |
-| `sql_tool.py` | Define la herramienta central `@tool` con su lógica de ejecución y validación de seguridad. |
-| `agent.py` | Instancia a los agentes (Llama-3.1 para tareas simples, Qwen-3 para JOINs) y lanza las preguntas. |
+| `src/database.py` | Crea el motor SQLite en memoria y pobla las tablas `receipts` y `waiters`. |
+| `src/schema_utils.py` | Proporciona herramientas dinámicas (`inspect`) para leer el esquema de las tablas. |
+| `src/sql_tool.py` | Define la herramienta central `@tool` con su lógica de ejecución y validación de seguridad. |
+| `src/agent.py` | Instancia a los agentes (Llama-3.1 para tareas simples, Qwen-3 para JOINs) y lanza las preguntas. |
 | `.env.example` | Plantilla segura para configurar el `HF_TOKEN`. |
 
 ## Seguridad
