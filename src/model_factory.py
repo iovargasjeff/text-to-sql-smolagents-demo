@@ -5,6 +5,9 @@ class LLMProvider:
     def generate_sql(self, question: str, schema: str, model_name: str) -> str:
         raise NotImplementedError
 
+    def generate_text(self, prompt: str, model_name: str) -> str:
+        raise NotImplementedError
+
 class MockProvider(LLMProvider):
     def generate_sql(self, question: str, schema: str, model_name: str) -> str:
         # Mock answers for predefined questions
@@ -20,6 +23,10 @@ class MockProvider(LLMProvider):
         else:
             # Fallback simple count for any other question in mock mode
             return "SELECT COUNT(*) FROM customers;"
+
+    def generate_text(self, prompt: str, model_name: str) -> str:
+        # Mock answers
+        return "Esta es una respuesta simulada por el proveedor Mock."
 
 class OpenAIProvider(LLMProvider):
     def generate_sql(self, question: str, schema: str, model_name: str) -> str:
@@ -44,6 +51,27 @@ class OpenAIProvider(LLMProvider):
             raise ValueError(f"Error de OpenAI: {response.text}")
         content = response.json()["choices"][0]["message"]["content"]
         return self._extract_sql(content)
+
+    def generate_text(self, prompt: str, model_name: str) -> str:
+        if not config.OPENAI_API_KEY:
+            raise ValueError("Falta OPENAI_API_KEY en el entorno.")
+            
+        import requests
+        headers = {
+            "Authorization": f"Bearer {config.OPENAI_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.0
+        }
+        
+        base_url = config.OPENAI_BASE_URL.rstrip('/') if config.OPENAI_BASE_URL else "https://api.openai.com/v1"
+        response = requests.post(f"{base_url}/chat/completions", headers=headers, json=data)
+        if response.status_code != 200:
+            raise ValueError(f"Error de OpenAI: {response.text}")
+        return response.json()["choices"][0]["message"]["content"]
 
     def _build_prompt(self, question: str, schema: str) -> str:
         return f"""Eres un experto traductor de lenguaje natural a SQL para PostgreSQL.
@@ -89,6 +117,27 @@ class DeepSeekProvider(OpenAIProvider):
         content = response.json()["choices"][0]["message"]["content"]
         return self._extract_sql(content)
 
+    def generate_text(self, prompt: str, model_name: str) -> str:
+        if not config.DEEPSEEK_API_KEY:
+            raise ValueError("Falta DEEPSEEK_API_KEY en el entorno.")
+            
+        import requests
+        headers = {
+            "Authorization": f"Bearer {config.DEEPSEEK_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.0
+        }
+        
+        base_url = config.DEEPSEEK_BASE_URL.rstrip('/')
+        response = requests.post(f"{base_url}/chat/completions", headers=headers, json=data)
+        if response.status_code != 200:
+            raise ValueError(f"Error de DeepSeek: {response.text}")
+        return response.json()["choices"][0]["message"]["content"]
+
 class GeminiProvider(OpenAIProvider):
     def generate_sql(self, question: str, schema: str, model_name: str) -> str:
         if not config.GEMINI_API_KEY:
@@ -119,6 +168,35 @@ class GeminiProvider(OpenAIProvider):
         try:
             content = json_resp["candidates"][0]["content"]["parts"][0]["text"]
             return self._extract_sql(content)
+        except (KeyError, IndexError):
+            raise ValueError(f"Respuesta inesperada de Gemini: {json_resp}")
+
+    def generate_text(self, prompt: str, model_name: str) -> str:
+        if not config.GEMINI_API_KEY:
+            raise ValueError("Falta GEMINI_API_KEY en el entorno.")
+            
+        import requests
+        headers = {
+            "Content-Type": "application/json"
+        }
+        
+        data = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }],
+            "generationConfig": {
+                "temperature": 0.0
+            }
+        }
+        
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={config.GEMINI_API_KEY}"
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code != 200:
+            raise ValueError(f"Error de Gemini: {response.text}")
+            
+        json_resp = response.json()
+        try:
+            return json_resp["candidates"][0]["content"]["parts"][0]["text"]
         except (KeyError, IndexError):
             raise ValueError(f"Respuesta inesperada de Gemini: {json_resp}")
 

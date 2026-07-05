@@ -2,6 +2,7 @@ from src.schema_introspector import fetch_schema_overview
 from src.model_factory import get_provider
 from src.sql_guard import validate_sql
 from src.db import run_query
+from src.answer_synthesizer import generate_natural_answer
 from src import config
 
 def process_question(question: str, provider_name: str = None, model_name: str = None) -> dict:
@@ -31,17 +32,29 @@ def process_question(question: str, provider_name: str = None, model_name: str =
         # 4. Ejecutar
         results = run_query(safe_sql)
         
+        # 5. Sintetizar respuesta
+        answer = generate_natural_answer(question, safe_sql, results, provider_name, model_name)
+        
         return {
             "success": True,
             "provider": provider_name,
             "model": model_name,
+            "question": question,
+            "answer": answer,
             "generated_sql": safe_sql,
-            "results": results
+            "rows": results,
+            "row_count": len(results),
+            "error": None
         }
     except Exception as e:
         return {
             "success": False,
             "provider": provider_name,
             "model": model_name,
+            "question": question,
+            "answer": None,
+            "generated_sql": None,
+            "rows": [],
+            "row_count": 0,
             "error": str(e)
         }

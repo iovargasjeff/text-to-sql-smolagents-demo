@@ -3,66 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text-to-SQL Lab (Fase 2)</title>
+    <title>Text-to-SQL Lab (Fase 2 Mejora)</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Text-to-SQL Lab</h1>
-            <p>Laboratorio para traducir lenguaje natural a SQL (PostgreSQL)</p>
-            <div class="note">Si no configuraste API keys en el .env, usa el proveedor <b>Mock</b>.</div>
+    <div class="chat-container">
+        <header class="chat-header">
+            <div>
+                <h1>Text-to-SQL Assistant</h1>
+                <p>Tu asistente para consultas a bases de datos</p>
+            </div>
+            <div class="header-controls">
+                <select id="providerSelect"></select>
+                <select id="modelSelect"></select>
+            </div>
         </header>
 
-        <main>
-            <div class="controls">
-                <div class="form-group">
-                    <label for="providerSelect">Proveedor de IA:</label>
-                    <select id="providerSelect"></select>
-                </div>
-                <div class="form-group">
-                    <label for="modelSelect">Modelo:</label>
-                    <select id="modelSelect"></select>
-                </div>
-            </div>
-
-            <div class="input-section">
-                <label for="questionInput">Tu pregunta:</label>
-                <textarea id="questionInput" rows="3" placeholder="Ej: ¿Qué cliente tiene más órdenes completadas?"></textarea>
-                
-                <div class="examples">
-                    <span>Ejemplos:</span>
+        <main class="chat-area" id="chatArea">
+            <div class="welcome-message">
+                <h2>¡Hola! ¿Qué deseas consultar hoy?</h2>
+                <div class="examples-grid">
                     <button class="example-btn">¿Qué cliente tiene más órdenes completadas?</button>
                     <button class="example-btn">¿Cuántos tickets críticos siguen abiertos?</button>
                     <button class="example-btn">¿Cuál es el monto total de órdenes por ciudad?</button>
-                    <button class="example-btn">Muéstrame tickets abiertos con prioridad alta</button>
                     <button class="example-btn">¿Qué clientes tienen pedidos pendientes?</button>
+                    <button class="example-btn">Muéstrame tickets abiertos con prioridad alta</button>
                 </div>
-
-                <button id="runBtn" class="primary-btn">Ejecutar consulta</button>
-            </div>
-
-            <div id="loader" class="hidden">Procesando...</div>
-
-            <div id="resultsSection" class="hidden">
-                <div class="result-header">
-                    <h3>Resultados</h3>
-                    <div class="badge" id="usedModelBadge"></div>
-                </div>
-
-                <div id="errorBox" class="error-box hidden"></div>
-
-                <div class="code-container">
-                    <h4>SQL Generado:</h4>
-                    <pre><code id="sqlOutput"></code></pre>
-                </div>
-
-                <div class="table-container">
-                    <h4>Datos:</h4>
-                    <div id="tableOutput"></div>
-                </div>
+                <div class="note">Si no tienes API keys, puedes usar el proveedor <b>Mock</b>.</div>
             </div>
         </main>
+
+        <footer class="chat-input-area">
+            <div class="input-wrapper">
+                <textarea id="questionInput" rows="1" placeholder="Escribe tu consulta aquí... (Shift+Enter para nueva línea)"></textarea>
+                <button id="runBtn" class="send-btn" title="Enviar consulta">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
+        </footer>
     </div>
     <script src="app.js"></script>
 </body>

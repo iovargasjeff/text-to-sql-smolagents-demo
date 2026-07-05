@@ -7,19 +7,23 @@ En la **Fase 2** hemos extendido el backend original de la Fase 1 incorporando u
 
 - **Base de Datos**: PostgreSQL 16 + pgvector.
 - **Backend API**: Python (FastAPI).
-- **Frontend**: HTML/CSS/JS (sin framework) servido estáticamente.
+- **Frontend**: HTML/CSS/JS (sin framework) con Interfaz tipo Chat servido estáticamente.
+- **Síntesis NLP**: `answer_synthesizer.py` para generar respuestas en lenguaje natural usando LLMs.
 - **Migraciones**: Scripts Python (`scripts/run_migrations.py`) sobre archivos `.sql` puros.
 - **Infraestructura**: Todo dockerizado vía `docker-compose`.
 
-## Novedades Fase 2
+## Novedades Fase 2 (Mejora Chat UI)
 
-1. **Interfaz Web**: Accesible en `http://localhost:8000`. Permite seleccionar proveedor, modelo, escribir una pregunta, ver el SQL generado y los resultados tabulares en un formato amigable.
+1. **Interfaz Web (Chat UI)**: Accesible en `http://localhost:8000`. Experiencia de conversación moderna. El usuario envía preguntas y el asistente responde con una burbuja de chat que incluye:
+   - Una **Respuesta en Lenguaje Natural** basada en los resultados de la BD.
+   - El **SQL Generado** (colapsable).
+   - Los **Datos / Tabla de resultados** (colapsable).
 2. **Soporte Multi-Proveedor**:
-   - `mock`: Proveedor local sin costo para desarrollo y demos, responde con ejemplos quemados.
-   - `openai`: Integración oficial con modelos GPT (`gpt-4o`, `gpt-4o-mini`, etc.)
-   - `deepseek`: Integración compatible con formato OpenAI para modelos `deepseek-chat` y `deepseek-v4-flash`.
+   - `mock`: Proveedor local sin costo para desarrollo y demos, responde con ejemplos fijos.
+   - `openai`: Integración oficial con modelos GPT.
+   - `deepseek`: Integración compatible con formato OpenAI para modelos DeepSeek.
    - `gemini`: Integración directa vía API REST a los modelos Gemini 2.5 de Google.
-3. **API RESTful**: Endpoints HTTP (`/api/query`, `/api/providers`) diseñados con FastAPI para integraciones fáciles y limpias.
+3. **API RESTful**: Endpoint `/api/query` enriquecido. Ahora devuelve `answer` y `row_count`.
 
 ## Instalación y Ejecución
 
