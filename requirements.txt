@@ -1,0 +1,4 @@
+smolagents
+sqlalchemy
+python-dotenv
+huggingface_hub
