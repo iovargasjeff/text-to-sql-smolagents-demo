@@ -1,7 +1,12 @@
-# Text-to-SQL AI Database Solutions (Fase 2)
+# Text-to-SQL AI Database Solutions (Fase 3)
+
+### 🇬🇧 English Overview
+This project is a reproducible "Lab" environment for testing Text-to-SQL architectures. It features a modern, bilingual Chat UI (English/Spanish) where users can ask natural language questions about their database. The AI translates these questions into safe SQL queries, executes them against a PostgreSQL database, and generates a conversational response based on the actual data. It includes multi-provider support (OpenAI, DeepSeek, Gemini, and a Mock mode), robust SQL security guards, and a query history panel for observability.
+
+---
 
 Este proyecto es un entorno reproducible ("Laboratorio") para probar arquitecturas Text-to-SQL.
-En la **Fase 2** hemos extendido el backend original de la Fase 1 incorporando una interfaz web ligera y un soporte robusto multi-proveedor.
+En la **Fase 3** hemos extendido el backend original incorporando una interfaz web ligera con soporte bilingüe (Español/Inglés) e historial de consultas.
 
 ## Arquitectura
 
