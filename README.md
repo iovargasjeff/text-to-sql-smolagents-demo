@@ -1,72 +1,312 @@
-# Text-to-SQL AI Database Solutions (Fase 3)
+# Text-to-SQL AI Database Solutions
 
-### 🇬🇧 English Overview
-This project is a reproducible "Lab" environment for testing Text-to-SQL architectures. It features a modern, bilingual Chat UI (English/Spanish) where users can ask natural language questions about their database. The AI translates these questions into safe SQL queries, executes them against a PostgreSQL database, and generates a conversational response based on the actual data. It includes multi-provider support (OpenAI, DeepSeek, Gemini, and a Mock mode), robust SQL security guards, and a query history panel for observability.
+A bilingual Text-to-SQL lab that lets users ask questions in natural language, converts them into safe SQL, runs them on PostgreSQL, and returns both a conversational answer and the underlying query results.
 
----
+## What this project does
 
-Este proyecto es un entorno reproducible ("Laboratorio") para probar arquitecturas Text-to-SQL.
-En la **Fase 3** hemos extendido el backend original incorporando una interfaz web ligera con soporte bilingüe (Español/Inglés) e historial de consultas.
+This project is a reproducible environment for experimenting with Text-to-SQL architectures. It includes a lightweight chat interface in English and Spanish where users can ask questions about a database using natural language instead of writing SQL manually.
 
-## Arquitectura
+The backend translates the question into SQL, applies safety checks before execution, runs the query on PostgreSQL, and then generates a human-readable answer based on the returned rows. The app also stores query history and execution metadata so you can inspect previous requests, compare behavior across providers, and debug failures more easily.
 
-- **Base de Datos**: PostgreSQL 16 + pgvector.
-- **Backend API**: Python (FastAPI).
-- **Frontend**: HTML/CSS/JS (sin framework) con Interfaz tipo Chat servido estáticamente.
-- **Síntesis NLP**: `answer_synthesizer.py` para generar respuestas en lenguaje natural usando LLMs.
-- **Migraciones**: Scripts Python (`scripts/run_migrations.py`) sobre archivos `.sql` puros.
-- **Infraestructura**: Todo dockerizado vía `docker-compose`.
+## Why it exists
 
-## Novedades Fase 2 (Mejora Chat UI)
+Text-to-SQL demos often stop at “generate a query and print the result.” This repository goes a step further by treating the system like a small product rather than a one-off experiment.
 
-1. **Interfaz Web (Chat UI)**: Accesible en `http://localhost:8000`. Experiencia de conversación moderna. El usuario envía preguntas y el asistente responde con una burbuja de chat que incluye:
-   - Una **Respuesta en Lenguaje Natural** basada en los resultados de la BD.
-   - El **SQL Generado** (colapsable).
-   - Los **Datos / Tabla de resultados** (colapsable).
-2. **Soporte Multi-Proveedor**:
-   - `mock`: Proveedor local sin costo para desarrollo y demos, responde con ejemplos fijos.
-   - `openai`: Integración oficial con modelos GPT.
-   - `deepseek`: Integración compatible con formato OpenAI para modelos DeepSeek.
-   - `gemini`: Integración directa vía API REST a los modelos Gemini 2.5 de Google.
-3. **API RESTful**: Endpoint `/api/query` enriquecido. Ahora devuelve `answer` y `row_count`.
+The project is designed to show the full lifecycle of a Text-to-SQL request:
 
-## Novedades Fase 3 (Historial y Observabilidad)
+- natural-language input
+- schema-aware SQL generation
+- SQL safety validation
+- query execution on PostgreSQL
+- natural-language answer synthesis
+- query logging and history
 
-1. **Tabla de Logs (`query_logs`)**: Se agregó una migración SQL para registrar todas las consultas, tanto exitosas como fallidas. Guarda métricas útiles como latencia (`latency_ms`), filas devueltas (`row_count`), error si falló, respuesta en lenguaje natural y modelo utilizado.
-2. **Panel de Historial UI**: Una nueva barra lateral en la aplicación web permite:
-   - Ver consultas recientes.
-   - Filtrar por estado (Todos, Éxito, Error).
-   - Ver indicadores visuales (badges verdes/rojos) y el tiempo de respuesta.
-   - Hacer clic en un log anterior para revivir la consulta en el área de chat (mostrando la pregunta, la respuesta en lenguaje natural y el SQL generado).
-3. **Nuevos Endpoints API**: `/api/history` y `/api/history/{id}` que permiten consultar de forma programática las consultas pasadas.
-4. **Resiliencia**: Los datos tabulares reales no se guardan en el log por seguridad, pero sí se conserva el SQL y la cantidad de filas devueltas originalmente.
+That makes it useful both as a learning project and as a starting point for more serious internal tools.
 
-## Instalación y Ejecución
+## Main features
 
-1. Clona el repositorio.
-2. Crea el archivo `.env` basándote en `.env.example`:
-   ```bash
-   cp .env.example .env
-   ```
-3. Configura tus claves de API (`OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `GEMINI_API_KEY`) en el archivo `.env`. Si no configuras ninguna, puedes seguir usando el proveedor **Mock**.
-4. Levanta los contenedores:
-   ```bash
-   docker compose up --build -d
-   ```
-5. Abre en tu navegador web: [http://localhost:8000](http://localhost:8000)
+- Bilingual chat UI in English and Spanish
+- PostgreSQL 16 as the SQL execution engine
+- pgvector enabled as a foundation for future semantic retrieval
+- FastAPI backend
+- Multi-provider support:
+  - `mock`
+  - `openai`
+  - `deepseek`
+  - `gemini`
+- SQL guard that restricts execution to safe read-only queries
+- Natural-language answer synthesis from real query results
+- Query history sidebar with status, latency, and metadata
+- REST API endpoints for live queries and history inspection
+- Docker Compose setup for reproducible local development
 
-## Seguridad
+## Architecture
 
-El sistema incorpora un mecanismo de seguridad (`sql_guard.py`) que bloquea las consultas de modificación (`INSERT`, `UPDATE`, `DELETE`, etc.), asegura que las sentencias sean de tipo `SELECT` y les inyecta por seguridad un `LIMIT 20`.
+The system is split into a few clear layers:
 
-## Modelos Soportados
+- **Frontend**: lightweight chat UI built with HTML, CSS, and JavaScript
+- **Backend API**: FastAPI service that orchestrates the full request pipeline
+- **SQL generation**: provider-based LLM layer that converts user questions into SQL
+- **Validation layer**: `sql_guard.py` ensures only safe read-only queries are executed
+- **Database**: PostgreSQL 16 with pgvector enabled
+- **Answer synthesis**: `answer_synthesizer.py` converts query results into natural-language responses
+- **Observability**: `query_logs` table and history endpoints for request tracking
 
-El archivo `config/providers.json` mantiene el catálogo actualizado. Algunos de los modelos clave son:
-- **OpenAI**: `gpt-4o`, `gpt-4o-mini`, `gpt-4.1`
-- **DeepSeek**: `deepseek-v4-flash` (recomendado), `deepseek-chat`
-- **Gemini**: `gemini-2.5-flash`, `gemini-2.5-pro`
+## How the request flow works
 
-## Próximos Pasos (Fase 3 - Futuro)
-- Integración de RAG avanzado con la base vectorial.
-- Metadatos expandidos para introspección compleja del esquema.
-- Historial de consultas.
+1. A user asks a question in the chat UI.
+2. The backend reads the schema and builds a prompt.
+3. The selected provider generates SQL.
+4. The SQL guard validates and sanitizes the query.
+5. PostgreSQL executes the query.
+6. The backend generates a natural-language answer from the returned rows.
+7. The request is stored in `query_logs`.
+8. The frontend displays the answer, SQL, results, and metadata.
+
+## Demo screenshots
+
+### Chat UI
+
+Add your main app screenshot here.
+
+```md
+
+```
+
+### Architecture diagram
+
+Add your high-level architecture image here.
+
+```md
+
+```
+
+### Query history and observability
+
+Add your history/logging screenshot here.
+
+```md
+
+```
+
+## Project structure
+
+```text
+.
+├── app/
+│   ├── api/
+│   ├── providers/
+│   ├── sql_guard.py
+│   ├── answer_synthesizer.py
+│   └── ...
+├── scripts/
+│   └── run_migrations.py
+├── sql/
+│   └── migrations/
+├── config/
+│   └── providers.json
+├── static/
+│   └── chat UI assets
+├── docker-compose.yml
+├── .env.example
+└── README.md
+```
+
+## Supported providers
+
+The available model catalog is managed in `config/providers.json`.
+
+Current provider groups include:
+
+- **Mock**: local demo mode for development without API cost
+- **OpenAI**: GPT-based models
+- **DeepSeek**: OpenAI-compatible integration
+- **Gemini**: direct REST API integration with Gemini models
+
+Example models may include:
+
+- OpenAI: `gpt-4o`, `gpt-4o-mini`, `gpt-4.1`
+- DeepSeek: `deepseek-v4-flash`, `deepseek-chat`
+- Gemini: `gemini-2.5-flash`, `gemini-2.5-pro`
+
+## Security model
+
+The project includes a SQL safety layer in `sql_guard.py`.
+
+By default, the guard is designed to:
+
+- allow only `SELECT` queries
+- block mutation statements such as `INSERT`, `UPDATE`, `DELETE`, `DROP`, and `ALTER`
+- reject multiple statements
+- inject a default `LIMIT` for safer execution
+
+This is meant as a practical safety baseline for demos, experiments, and internal tools. It is not a replacement for production-grade access control or database-level security policies.
+
+## Query history and observability
+
+One of the goals of this repository is to make the system easier to inspect, not just easier to demo.
+
+Each query can be recorded in the `query_logs` table with metadata such as:
+
+- question
+- provider
+- model
+- generated SQL
+- natural-language answer
+- row count
+- latency
+- status
+- error message
+
+The frontend history panel lets you review previous executions and quickly understand how the system behaved over time.
+
+## Installation
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/iovargasjeff/text-to-sql-smolagents-demo.git
+cd text-to-sql-smolagents-demo
+```
+
+### 2. Create your environment file
+
+```bash
+cp .env.example .env
+```
+
+### 3. Configure provider credentials
+
+Set any provider keys you want to use in `.env`.
+
+Examples:
+
+```env
+OPENAI_API_KEY=
+DEEPSEEK_API_KEY=
+GEMINI_API_KEY=
+```
+
+If you do not configure any provider keys, you can still use the `mock` provider for local demos.
+
+### 4. Start the stack
+
+```bash
+docker compose up --build -d
+```
+
+### 5. Open the app
+
+Open:
+
+[http://localhost:8000](http://localhost:8000)
+
+## API overview
+
+### `POST /api/query`
+
+Processes a natural-language question and returns the answer, SQL, rows, and metadata.
+
+Example response:
+
+```json
+{
+  "provider": "mock",
+  "model": "demo-sql-v1",
+  "question": "Which customer has the most completed orders?",
+  "answer": "Ana Torres has the most completed orders, with 4 completed purchases.",
+  "sql": "SELECT c.name, COUNT(*) AS total_orders FROM ... LIMIT 1",
+  "rows": [
+    {
+      "name": "Ana Torres",
+      "total_orders": 4
+    }
+  ],
+  "row_count": 1,
+  "error": null
+}
+```
+
+### `GET /api/history`
+
+Returns recent query log entries.
+
+### `GET /api/history/{id}`
+
+Returns the details of one past query execution.
+
+## Example questions
+
+You can test the app with questions like:
+
+- Which customer has the most completed orders?
+- How many critical tickets are still open?
+- What is the total revenue by city?
+- Which customers placed more than three orders this month?
+
+## Local development notes
+
+This repository is designed to be reproducible through Docker Compose so the app, database, and supporting services start in a consistent way.
+
+That makes it easier to:
+- share the project publicly
+- demo it in videos or articles
+- test different model providers
+- experiment without manually rebuilding the environment every time
+
+## Limitations
+
+This project is intentionally focused on clarity and experimentation, so there are still important limitations:
+
+- It is not a full production system
+- It does not implement role-based access control
+- SQL validation is rule-based
+- Query quality still depends on prompt quality and schema clarity
+- pgvector is present as a foundation, but advanced retrieval is still future work
+- The current workflow is best suited for demos, local experimentation, and internal prototypes
+
+## Roadmap
+
+Possible next steps include:
+
+- hybrid retrieval using pgvector
+- richer schema metadata for better prompting
+- automatic retries for malformed SQL
+- provider benchmarking using query logs
+- CSV export
+- authentication for private deployments
+- evaluation datasets and prompt benchmarking
+
+## Tech stack
+
+- **Backend**: Python, FastAPI
+- **Frontend**: HTML, CSS, JavaScript
+- **Database**: PostgreSQL 16, pgvector
+- **Infra**: Docker Compose
+- **LLM providers**: OpenAI, DeepSeek, Gemini, Mock mode
+
+## Repository purpose
+
+This repository is useful if you want to:
+
+- learn how a Text-to-SQL pipeline works end to end
+- study safe SQL execution patterns
+- build a chat-based database assistant
+- experiment with multiple LLM providers
+- add observability to AI query workflows
+
+## References
+
+This project was inspired by the following resources:
+
+- Hugging Face smolagents: [https://github.com/huggingface/smolagents](https://github.com/huggingface/smolagents)
+- Hugging Face Text-to-SQL example: [https://github.com/huggingface/smolagents/blob/main/docs/source/en/examples/text_to_sql.md](https://github.com/huggingface/smolagents/blob/main/docs/source/en/examples/text_to_sql.md)
+- Union.ai tutorial: [https://www.union.ai/docs/byoc/tutorials/compound-ai-systems/text_to_sql_agent/](https://www.union.ai/docs/byoc/tutorials/compound-ai-systems/text_to_sql_agent/)
+
+## License
+
+Add your license here, for example:
+
+```md
+MIT
+```
