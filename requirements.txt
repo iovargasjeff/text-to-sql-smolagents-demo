@@ -2,3 +2,5 @@ psycopg[binary]
 python-dotenv
 tabulate
 requests
+fastapi
+uvicorn

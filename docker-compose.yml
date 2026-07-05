@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -21,18 +21,22 @@ services:
     container_name: text2sql_app
     env_file:
       - .env
+    ports:
+      - "8000:8000"
     volumes:
       - ./src:/app/src
       - ./scripts:/app/scripts
       - ./migrations:/app/migrations
+      - ./frontend:/app/frontend
+      - ./config:/app/config
     depends_on:
       db:
         condition: service_healthy
     command: >
       sh -c "python scripts/wait_for_db.py &&
              python scripts/run_migrations.py &&
-             echo 'Backend listo. Usa docker exec para interactuar con agent.py' &&
-             tail -f /dev/null"
+             echo 'Backend listo. Iniciando API...' &&
+             uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
 
 volumes:
   pgdata:

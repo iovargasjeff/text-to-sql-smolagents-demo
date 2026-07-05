@@ -1,61 +1,52 @@
-# Text-to-SQL con PostgreSQL y pgvector (Fase 1)
+# Text-to-SQL AI Database Solutions (Fase 2)
 
-Este es un laboratorio backend sólido para demostrar soluciones de Text-to-SQL e Inteligencia Artificial usando **PostgreSQL**, la extensión **pgvector**, y una arquitectura agnóstica de proveedor de IA.
+Este proyecto es un entorno reproducible ("Laboratorio") para probar arquitecturas Text-to-SQL.
+En la **Fase 2** hemos extendido el backend original de la Fase 1 incorporando una interfaz web ligera y un soporte robusto multi-proveedor.
 
-## Descripción de la Fase 1
-El objetivo de la Fase 1 es crear una fundación sólida y reproducible usando contenedores Docker. Aún no cuenta con una interfaz web ni integra *smolagents* directamente, pero la arquitectura está preparada para que sea fácil extender en la **Fase 2**.
+## Arquitectura
 
-Se incluye:
-- Backend funcional en Python.
-- Ejecución completa vía `docker-compose`.
-- PostgreSQL con `pgvector`.
-- Migraciones y carga de datos automática.
-- Integración de proveedores de modelos de lenguaje (OpenAI, DeepSeek, Gemini).
-- Un modo "mock" para pruebas sin API keys.
-- Scripts de validación de seguridad para bloquear comandos SQL destructivos.
+- **Base de Datos**: PostgreSQL 16 + pgvector.
+- **Backend API**: Python (FastAPI).
+- **Frontend**: HTML/CSS/JS (sin framework) servido estáticamente.
+- **Migraciones**: Scripts Python (`scripts/run_migrations.py`) sobre archivos `.sql` puros.
+- **Infraestructura**: Todo dockerizado vía `docker-compose`.
 
-## ¿Por qué PostgreSQL y pgvector?
-PostgreSQL es un estándar en la industria por su confiabilidad y compatibilidad. Con la extensión `pgvector`, podemos almacenar y hacer búsquedas semánticas (búsqueda vectorial) directamente dentro de nuestra base de datos relacional. Esto nos permite unificar datos de negocio estructurados y búsquedas basadas en IA sin necesidad de un motor de base de datos vectorial externo (como Pinecone o Weaviate).
+## Novedades Fase 2
 
-## Cómo Configurar
-1. Copia el archivo `.env.example` a `.env`:
+1. **Interfaz Web**: Accesible en `http://localhost:8000`. Permite seleccionar proveedor, modelo, escribir una pregunta, ver el SQL generado y los resultados tabulares en un formato amigable.
+2. **Soporte Multi-Proveedor**:
+   - `mock`: Proveedor local sin costo para desarrollo y demos, responde con ejemplos quemados.
+   - `openai`: Integración oficial con modelos GPT (`gpt-4o`, `gpt-4o-mini`, etc.)
+   - `deepseek`: Integración compatible con formato OpenAI para modelos `deepseek-chat` y `deepseek-v4-flash`.
+   - `gemini`: Integración directa vía API REST a los modelos Gemini 2.5 de Google.
+3. **API RESTful**: Endpoints HTTP (`/api/query`, `/api/providers`) diseñados con FastAPI para integraciones fáciles y limpias.
+
+## Instalación y Ejecución
+
+1. Clona el repositorio.
+2. Crea el archivo `.env` basándote en `.env.example`:
    ```bash
    cp .env.example .env
    ```
-2. Edita `.env` para incluir tus API Keys. Si no tienes ninguna, puedes dejar `MODEL_PROVIDER=mock` para probar las consultas de demostración precargadas.
+3. Configura tus claves de API (`OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `GEMINI_API_KEY`) en el archivo `.env`. Si no configuras ninguna, puedes seguir usando el proveedor **Mock**.
+4. Levanta los contenedores:
+   ```bash
+   docker compose up --build -d
+   ```
+5. Abre en tu navegador web: [http://localhost:8000](http://localhost:8000)
 
-## Cómo Levantar el Proyecto
-Asegúrate de tener Docker y Docker Compose instalados, y luego corre:
-```bash
-docker compose up --build
-```
-Esto levantará:
-- Un contenedor con PostgreSQL y pgvector, aplicando migraciones e insertando datos de prueba.
-- Un contenedor con la aplicación Python que esperará a la base de datos y quedará en espera.
+## Seguridad
 
-## Cómo Correr Ejemplos (CLI)
-Una vez que los contenedores estén corriendo, usa `docker exec` para interactuar con la aplicación:
+El sistema incorpora un mecanismo de seguridad (`sql_guard.py`) que bloquea las consultas de modificación (`INSERT`, `UPDATE`, `DELETE`, etc.), asegura que las sentencias sean de tipo `SELECT` y les inyecta por seguridad un `LIMIT 20`.
 
-### Ejemplos Text-to-SQL
-```bash
-docker exec -it text2sql_app python src/agent.py sql "¿Qué cliente tiene más órdenes completadas?"
-docker exec -it text2sql_app python src/agent.py sql "¿Cuántos tickets críticos siguen abiertos?"
-docker exec -it text2sql_app python src/agent.py sql "¿Qué clientes hicieron pedidos pendientes?"
-```
+## Modelos Soportados
 
-### Ejemplo Vector Search
-Para probar la búsqueda por similitud vectorial (usando un vector de prueba de 4 dimensiones):
-```bash
-docker exec -it text2sql_app python src/agent.py vector "0.1,0.2,0.3,0.4"
-```
+El archivo `config/providers.json` mantiene el catálogo actualizado. Algunos de los modelos clave son:
+- **OpenAI**: `gpt-4o`, `gpt-4o-mini`, `gpt-4.1`
+- **DeepSeek**: `deepseek-v4-flash` (recomendado), `deepseek-chat`
+- **Gemini**: `gemini-2.5-flash`, `gemini-2.5-pro`
 
-## Limitaciones de la Fase 1
-- **Solo CLI**: No hay un frontend web.
-- **Sin framework complejo de agentes**: Las integraciones de orquestación complejas se aplazaron para mantener el foco en la solidez del flujo básico de datos.
-- **Vectores Dummy**: Se usa un modelo de 4 dimensiones para demostrar pgvector sin integrar un modelo de embeddings real aún.
-
-## Plan para la Fase 2
-En la siguiente fase se construirá:
-- Una interfaz web interactiva.
-- Integración nativa de `smolagents` para un flujo de agente autónomo, toma de decisiones y encadenamiento de herramientas más avanzado.
-- Embeddings reales para los chunks de conocimiento.
+## Próximos Pasos (Fase 3 - Futuro)
+- Integración de RAG avanzado con la base vectorial.
+- Metadatos expandidos para introspección compleja del esquema.
+- Historial de consultas.
