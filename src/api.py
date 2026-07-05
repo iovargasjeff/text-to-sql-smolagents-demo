@@ -11,6 +11,7 @@ class QueryRequest(BaseModel):
     question: str
     provider: str
     model: str
+    language: str = "es"
 
 @router.get("/api/health")
 def health_check():
@@ -22,7 +23,7 @@ def get_providers():
 
 @router.post("/api/query")
 def api_query(req: QueryRequest):
-    result = process_question(req.question, req.provider, req.model)
+    result = process_question(req.question, req.provider, req.model, req.language)
     if not result["success"]:
         return result
     return result

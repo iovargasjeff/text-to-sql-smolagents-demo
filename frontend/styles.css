@@ -182,6 +182,22 @@ body {
 .header-controls {
     display: flex;
     gap: 10px;
+    align-items: center;
+}
+
+.lang-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: all 0.2s;
+}
+
+.lang-btn:hover {
+    background: #f1f5f9;
 }
 
 select {

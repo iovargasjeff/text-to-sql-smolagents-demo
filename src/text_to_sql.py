@@ -7,7 +7,7 @@ from src.query_logger import log_query_execution
 from src import config
 import time
 
-def process_question(question: str, provider_name: str = None, model_name: str = None) -> dict:
+def process_question(question: str, provider_name: str = None, model_name: str = None, language: str = "es") -> dict:
     """
     Orquesta todo el flujo de Text-to-SQL:
     1. Obtiene esquema.
@@ -40,7 +40,7 @@ def process_question(question: str, provider_name: str = None, model_name: str =
         results = run_query(safe_sql)
         
         # 5. Sintetizar respuesta
-        answer = generate_natural_answer(question, safe_sql, results, provider_name, model_name)
+        answer = generate_natural_answer(question, safe_sql, results, provider_name, model_name, language)
         
         latency_ms = int((time.time() - start_time) * 1000)
         

@@ -11,11 +11,11 @@
         <!-- Sidebar Historial -->
         <aside class="history-sidebar">
             <div class="history-header">
-                <h2>Historial</h2>
+                <h2 data-i18n="historyTitle">Historial</h2>
                 <div class="history-filters">
-                    <button class="filter-btn active" data-filter="all">Todos</button>
-                    <button class="filter-btn" data-filter="success">Éxito</button>
-                    <button class="filter-btn" data-filter="error">Error</button>
+                    <button class="filter-btn active" data-filter="all" data-i18n="filterAll">Todos</button>
+                    <button class="filter-btn" data-filter="success" data-i18n="filterSuccess">Éxito</button>
+                    <button class="filter-btn" data-filter="error" data-i18n="filterError">Error</button>
                 </div>
             </div>
             <div class="history-list" id="historyList">
@@ -26,37 +26,37 @@
         <!-- Chat Container -->
         <div class="chat-container">
             <header class="chat-header">
-            <div>
-                <h1>Text-to-SQL Assistant</h1>
-                <p>Tu asistente para consultas a bases de datos</p>
-            </div>
-            <div class="header-controls">
-                <select id="providerSelect"></select>
-                <select id="modelSelect"></select>
-            </div>
-        </header>
-
-        <main class="chat-area" id="chatArea">
-            <div class="welcome-message">
-                <h2>¡Hola! ¿Qué deseas consultar hoy?</h2>
-                <div class="examples-grid">
-                    <button class="example-btn">¿Qué cliente tiene más órdenes completadas?</button>
-                    <button class="example-btn">¿Cuántos tickets críticos siguen abiertos?</button>
-                    <button class="example-btn">¿Cuál es el monto total de órdenes por ciudad?</button>
-                    <button class="example-btn">¿Qué clientes tienen pedidos pendientes?</button>
-                    <button class="example-btn">Muéstrame tickets abiertos con prioridad alta</button>
+                <div>
+                    <h1 data-i18n="appTitle">Text-to-SQL Assistant</h1>
+                    <p data-i18n="appSubtitle">Tu asistente para consultas a bases de datos</p>
                 </div>
-                <div class="note">Si no tienes API keys, puedes usar el proveedor <b>Mock</b>.</div>
-            </div>
-        </main>
+                <div class="header-controls">
+                    <button id="langToggle" class="lang-btn">🇺🇸 English</button>
+                    <select id="providerSelect" class="provider-select" title="Selecciona Proveedor"></select>
+                    <select id="modelSelect" class="model-select" title="Selecciona Modelo"></select>
+                </div>
+            </header>
 
-        <footer class="chat-input-area">
-            <div class="input-wrapper">
-                <textarea id="questionInput" rows="1" placeholder="Escribe tu consulta aquí... (Shift+Enter para nueva línea)"></textarea>
-                <button id="runBtn" class="send-btn" title="Enviar consulta">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
-                </button>
-            </div>
+            <main class="chat-area" id="chatArea">
+                <div class="welcome-message">
+                    <h2 data-i18n="welcomeTitle">¡Hola! ¿En qué puedo ayudarte hoy?</h2>
+                    <p data-i18n="welcomeDesc">Escribe una pregunta sobre tus datos y la convertiré en una consulta SQL.</p>
+                    <div class="examples-grid">
+                        <button class="example-btn" data-i18n="example1">¿Qué clientes hicieron pedidos en 2023?</button>
+                        <button class="example-btn" data-i18n="example2">Muestra el top 5 de productos más vendidos</button>
+                        <button class="example-btn" data-i18n="example3">Total de ingresos por mes</button>
+                    </div>
+                    <div class="note" data-i18n="mockNote">Si no tienes API keys, puedes usar el proveedor <b>Mock</b>.</div>
+                </div>
+            </main>
+
+            <footer class="input-area">
+                <div class="input-container">
+                    <textarea id="questionInput" data-i18n-placeholder="inputPlaceholder" placeholder="Ej: ¿Cuáles son los clientes con más compras?" rows="1"></textarea>
+                    <button id="runBtn" class="run-btn" title="Ejecutar Consulta" data-i18n-title="runBtnTitle">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                    </button>
+                </div>
             </footer>
         </div>
     </div>

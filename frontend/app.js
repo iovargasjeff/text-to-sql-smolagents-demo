@@ -7,9 +7,100 @@ document.addEventListener("DOMContentLoaded", () => {
     const welcomeMessage = document.querySelector(".welcome-message");
     const historyList = document.getElementById("historyList");
     const filterBtns = document.querySelectorAll(".filter-btn");
+    const langToggle = document.getElementById("langToggle");
 
     let providersData = [];
     let currentFilter = "all";
+    let currentLang = "es";
+
+    const i18n = {
+        es: {
+            langBtn: "🇺🇸 English",
+            historyTitle: "Historial",
+            filterAll: "Todos",
+            filterSuccess: "Éxito",
+            filterError: "Error",
+            appTitle: "Text-to-SQL Assistant",
+            appSubtitle: "Tu asistente para consultas a bases de datos",
+            welcomeTitle: "¡Hola! ¿En qué puedo ayudarte hoy?",
+            welcomeDesc: "Escribe una pregunta sobre tus datos y la convertiré en una consulta SQL.",
+            example1: "¿Qué clientes hicieron pedidos en 2023?",
+            example2: "Muestra el top 5 de productos más vendidos",
+            example3: "Total de ingresos por mes",
+            mockNote: "Si no tienes API keys, puedes usar el proveedor <b>Mock</b>.",
+            inputPlaceholder: "Ej: ¿Cuáles son los clientes con más compras?",
+            runBtnTitle: "Ejecutar Consulta",
+            noHistory: "No hay consultas recientes.",
+            errorUnknown: "Error desconocido.",
+            networkError: "Error de red:",
+            errorTitle: "Ups, ocurrió un error:",
+            processing: "Procesando consulta...",
+            noAnswer: "No se pudo generar una respuesta.",
+            historyNote: "(Consulta del Historial)",
+            viewSql: "Ver SQL Generado",
+            viewData: "Ver Datos",
+            noRows: "No hay filas devueltas.",
+            historyMockRows: "Nota: Los datos reales no se almacenan en el historial por seguridad. Filas devueltas originalmente:",
+            footerMeta: "Ejecutado sobre PostgreSQL | Proveedor:"
+        },
+        en: {
+            langBtn: "🇪🇸 Español",
+            historyTitle: "History",
+            filterAll: "All",
+            filterSuccess: "Success",
+            filterError: "Error",
+            appTitle: "Text-to-SQL Assistant",
+            appSubtitle: "Your database query assistant",
+            welcomeTitle: "Hello! How can I help you today?",
+            welcomeDesc: "Write a question about your data and I will convert it into an SQL query.",
+            example1: "Which customers placed orders in 2023?",
+            example2: "Show the top 5 best-selling products",
+            example3: "Total revenue per month",
+            mockNote: "If you don't have API keys, you can use the <b>Mock</b> provider.",
+            inputPlaceholder: "Ex: Which customers have the most purchases?",
+            runBtnTitle: "Run Query",
+            noHistory: "No recent queries.",
+            errorUnknown: "Unknown error.",
+            networkError: "Network error:",
+            errorTitle: "Oops, an error occurred:",
+            processing: "Processing query...",
+            noAnswer: "Could not generate an answer.",
+            historyNote: "(History Query)",
+            viewSql: "View Generated SQL",
+            viewData: "View Data",
+            noRows: "No rows returned.",
+            historyMockRows: "Note: Real data is not stored in history for security. Rows originally returned:",
+            footerMeta: "Executed on PostgreSQL | Provider:"
+        }
+    };
+
+    function updateLanguage() {
+        const texts = i18n[currentLang];
+        
+        langToggle.textContent = texts.langBtn;
+
+        document.querySelectorAll("[data-i18n]").forEach(el => {
+            const key = el.getAttribute("data-i18n");
+            if (texts[key]) el.innerHTML = texts[key];
+        });
+
+        document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+            const key = el.getAttribute("data-i18n-placeholder");
+            if (texts[key]) el.placeholder = texts[key];
+        });
+
+        document.querySelectorAll("[data-i18n-title]").forEach(el => {
+            const key = el.getAttribute("data-i18n-title");
+            if (texts[key]) el.title = texts[key];
+        });
+        
+        loadHistory(); // Recargar historial en el idioma correcto
+    }
+
+    langToggle.addEventListener("click", () => {
+        currentLang = currentLang === "es" ? "en" : "es";
+        updateLanguage();
+    });
 
     // Cargar proveedores
     fetch("/api/providers")
@@ -96,7 +187,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const req = {
                 question: question,
                 provider: providerSelect.value,
-                model: modelSelect.value
+                model: modelSelect.value,
+                language: currentLang
             };
 
             const res = await fetch("/api/query", {
@@ -112,7 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // 3. Respuesta del asistente
             if (!data.success) {
-                appendErrorMessage(data.error || "Error desconocido.");
+                appendErrorMessage(data.error || i18n[currentLang].errorUnknown);
             } else {
                 appendAssistantMessage(data);
             }
@@ -121,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
             loadHistory();
         } catch (err) {
             loadingNode.remove();
-            appendErrorMessage(`Error de red: ${err.message}`);
+            appendErrorMessage(`${i18n[currentLang].networkError} ${err.message}`);
         } finally {
             runBtn.disabled = false;
             scrollToBottom();
@@ -146,7 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderHistoryList(items) {
         historyList.innerHTML = "";
         if (!items || items.length === 0) {
-            historyList.innerHTML = "<p style='color:#94a3b8; font-size: 0.85rem; text-align: center; margin-top:20px;'>No hay consultas recientes.</p>";
+            historyList.innerHTML = `<p style='color:#94a3b8; font-size: 0.85rem; text-align: center; margin-top:20px;'>${i18n[currentLang].noHistory}</p>`;
             return;
         }
 
@@ -157,7 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const time = new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const isSuccess = item.status === "success";
             const badgeClass = isSuccess ? "success" : "error";
-            const badgeText = isSuccess ? "Éxito" : "Error";
+            const badgeText = isSuccess ? i18n[currentLang].filterSuccess : i18n[currentLang].filterError;
             const latency = item.latency_ms ? `${item.latency_ms}ms` : "-";
             const rows = item.row_count !== null ? `${item.row_count} filas` : "";
             
@@ -200,7 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     };
                     appendAssistantMessage(adaptedData, true); // true = es un log pasado
                 } else {
-                    appendErrorMessage(data.error_message || "Error desconocido");
+                    appendErrorMessage(data.error_message || i18n[currentLang].errorUnknown);
                 }
                 
                 scrollToBottom();
@@ -232,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
         row.className = "msg-row bot";
         const bubble = document.createElement("div");
         bubble.className = "msg-bubble loading-bubble";
-        bubble.innerHTML = '<div class="spinner"></div><span>Procesando consulta...</span>';
+        bubble.innerHTML = `<div class="spinner"></div><span>${i18n[currentLang].processing}</span>`;
         row.appendChild(bubble);
         chatArea.appendChild(row);
         return row;
@@ -243,7 +335,7 @@ document.addEventListener("DOMContentLoaded", () => {
         row.className = "msg-row bot";
         const bubble = document.createElement("div");
         bubble.className = "msg-bubble error-bubble";
-        bubble.textContent = `Ups, ocurrió un error:\n${errorMsg}`;
+        bubble.textContent = `${i18n[currentLang].errorTitle}\n${errorMsg}`;
         row.appendChild(bubble);
         chatArea.appendChild(row);
     }
@@ -258,9 +350,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const answerDiv = document.createElement("div");
         answerDiv.className = "bot-answer";
         if (isHistory) {
-            answerDiv.innerHTML = `<span style="color:#94a3b8; font-size:0.8rem; display:block; margin-bottom:5px;">(Consulta del Historial)</span>` + (data.answer || "No se pudo generar una respuesta.");
+            answerDiv.innerHTML = `<span style="color:#94a3b8; font-size:0.8rem; display:block; margin-bottom:5px;">${i18n[currentLang].historyNote}</span>` + (data.answer || i18n[currentLang].noAnswer);
         } else {
-            answerDiv.textContent = data.answer || "No se pudo generar una respuesta.";
+            answerDiv.textContent = data.answer || i18n[currentLang].noAnswer;
         }
         bubble.appendChild(answerDiv);
 
@@ -268,7 +360,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (data.generated_sql) {
             const sqlDetails = document.createElement("details");
             const sqlSummary = document.createElement("summary");
-            sqlSummary.textContent = "Ver SQL Generado";
+            sqlSummary.textContent = i18n[currentLang].viewSql;
             const sqlContent = document.createElement("div");
             sqlContent.className = "details-content";
             const pre = document.createElement("pre");
@@ -286,7 +378,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const tableDetails = document.createElement("details");
             tableDetails.open = true; // Abierto por defecto
             const tableSummary = document.createElement("summary");
-            tableSummary.textContent = `Ver Datos (${data.row_count} filas)`;
+            tableSummary.textContent = `${i18n[currentLang].viewData} (${data.row_count})`;
             
             const tableContent = document.createElement("div");
             tableContent.className = "details-content table-wrapper";
@@ -295,7 +387,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const table = renderTableHTML(data.rows);
                 tableContent.appendChild(table);
             } else {
-                tableContent.innerHTML = "<p>No hay filas devueltas.</p>";
+                tableContent.innerHTML = `<p>${i18n[currentLang].noRows}</p>`;
             }
 
             tableDetails.appendChild(tableSummary);
@@ -306,14 +398,14 @@ document.addEventListener("DOMContentLoaded", () => {
             historyNote.style.fontSize = "0.8rem";
             historyNote.style.color = "#64748b";
             historyNote.style.marginTop = "10px";
-            historyNote.textContent = `Nota: Los datos reales no se almacenan en el historial por seguridad. Filas devueltas originalmente: ${data.row_count || 0}.`;
+            historyNote.textContent = `${i18n[currentLang].historyMockRows} ${data.row_count || 0}.`;
             bubble.appendChild(historyNote);
         }
 
         // Footer Metadata
         const footer = document.createElement("div");
         footer.className = "metadata-footer";
-        footer.textContent = `Ejecutado sobre PostgreSQL | Proveedor: ${data.provider} | Modelo: ${data.model}`;
+        footer.textContent = `${i18n[currentLang].footerMeta} ${data.provider} | Modelo: ${data.model}`;
         bubble.appendChild(footer);
 
         row.appendChild(bubble);
